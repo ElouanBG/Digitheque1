@@ -42,9 +42,12 @@ def search():
 def add():
     selection = request.form.get('book_info')
     if selection and "|" in selection:
+        # On sépare le titre et l'auteur (format : Titre|Auteur)
         parts = selection.split('|')
-        # On utilise 'author' au singulier pour correspondre au HTML
-        my_library.append({'title': parts[0], 'author': parts[1]})
+        new_book = {'title': parts[0], 'author': parts[1]}
+        my_library.append(new_book)
+    
+    # Redirection vers la page bibliothèque après l'ajout
     return redirect(url_for('show_library'))
 
 @app.route('/library')
