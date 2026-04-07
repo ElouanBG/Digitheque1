@@ -47,7 +47,7 @@
         <p style="color: #e74c3c; text-align: center; font-weight: bold;">{{ error }}</p>
     {% endif %}
 
-  <script>
+<script>
 const input = document.getElementById('bookInput');
 const suggestionsBox = document.getElementById('suggestionsBox');
 const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
@@ -56,33 +56,34 @@ input.addEventListener('input', async () => {
     const query = input.value;
     if (query.length < 3) {
         suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
         return;
     }
 
     try {
-        // ON AJOUTE LA CLÉ ICI POUR QUE GOOGLE RÉPONDE AU NAVIGATEUR
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&key=${API_KEY}`;
+        // ON PASSE EN MODE US : Pas de restriction de langue, mais catalogue mondial.
+        // On demande 10 résultats pour être sûr d'avoir les gros titres.
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&country=US&maxResults=10&orderBy=relevance&key=${API_KEY}`;
+        
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.items) {
-    suggestionsBox.innerHTML = data.items.map(book => {
-        const title = book.volumeInfo.title;
-        const author = book.volumeInfo.authors ? book.volumeInfo.authors[0] : "Auteur inconnu";
-        
-        // On prépare les textes pour le clic (gestion des apostrophes)
-        const cleanTitle = title.replace(/'/g, "\\'");
-        
-        return `
-            <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
-                <span class="suggestion-title">${title}</span>
-                <span class="suggestion-author"> — ${author}</span>
-            </div>
-        `;
-    }).join('');
-    
-    suggestionsBox.style.display = 'block';
-}
+            suggestionsBox.innerHTML = data.items.map(book => {
+                const info = book.volumeInfo;
+                const title = info.title || "Titre inconnu";
+                const author = info.authors ? info.authors[0] : "Auteur inconnu";
+                const cleanTitle = title.replace(/'/g, "\\'");
+                
+                return `
+                    <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
+                        <span class="suggestion-title">${title}</span>
+                        <span class="suggestion-author"> — ${author}</span>
+                    </div>
+                `;
+            }).join('');
+            suggestionsBox.style.display = 'block';
+        }
     } catch (e) {
         console.error("Erreur suggestions:", e);
     }
@@ -95,7 +96,7 @@ function selectSuggestion(title) {
 }
 
 document.addEventListener('click', (e) => {
-    if (e.target !== input) suggestionsBox.innerHTML = '';
+    if (e.target !== input) suggestionsBox.style.display = 'none';
 });
 </script>
 </body>

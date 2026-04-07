@@ -80,19 +80,16 @@ h1 {
 }
 
 .suggestions-dropdown {
-    position: absolute;
+    position: absolute; /* Crucial : la liste "flotte" au-dessus du reste */
     top: 100%;
     left: 0;
     right: 0;
-    background: white !important; /* Force le blanc */
+    background: white;
     border: 1px solid #ddd;
-    border-top: none;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-radius: 0 0 6px 6px;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none; /* AJOUTE ÇA : cache la boîte quand elle est vide */
+    z-index: 1000; /* Passe devant tout le reste */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: none; /* Masqué par défaut */
+}
 }
 
 .suggestion-item {

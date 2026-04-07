@@ -16,11 +16,11 @@ def home():
 @app.route('/search', methods=['POST'])
 def search():
     entry = request.form.get('user_book')
-    # On récupère l'ID spécifique si l'utilisateur a cliqué sur une suggestion
+    # On récupère l'ID spécifique si    l'utilisateur a cliqué sur une suggestion
     selected_id = request.form.get('selected_book_id') 
 
     if not entry:
-        return redirect(url_for('home'))
+        return redirect(url_for('homeme'))
 
     params = {'q': entry, 'key': API_KEY}
     response = requests.get("https://www.googleapis.com/books/v1/volumes", params=params)
