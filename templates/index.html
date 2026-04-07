@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ma Biblio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Recherche</a>
+        <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
+    </nav>
+
+    <h1>Chercher un livre</h1>
+
+    <div class="search-container">
+        <form action="{{ url_for('search') }}" method="POST" id="searchForm" autocomplete="off">
+            <div class="input-wrapper">
+                <input type="text" name="user_book" id="bookInput" 
+                       value="{{ entry if entry else '' }}" 
+                       placeholder="Chercher un livre comme sur Amazon..." required>
+                <div id="suggestionsBox" class="suggestions-dropdown"></div>
+            </div>
+            <button type="submit">Rechercher</button>
+        </form>
+    </div>
+
+    {% if results %}
+    <div class="results-box">
+        <h3>Résultats pour "{{ entry }}"</h3>
+        <form action="{{ url_for('add') }}" method="POST">
+            <label for="book_info">Choisissez la version exacte :</label>
+            <select name="book_info" id="book_info">
+                {% for book in results %}
+                    {% set info = book.volumeInfo %}
+                    <option value="{{ info.title }}|{{ info.authors[0] if info.authors else 'Inconnu' }}">
+                        {{ info.title }} ({{ info.authors[0] if info.authors else 'Inconnu' }})
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-add">Ajouter à ma bibliothèque</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if error %}
+        <p style="color: #e74c3c; text-align: center; font-weight: bold;">{{ error }}</p>
+    {% endif %}
+
+  <script>
+const input = document.getElementById('bookInput');
+const suggestionsBox = document.getElementById('suggestionsBox');
+const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
+
+input.addEventListener('input', async () => {
+    const query = input.value;
+    if (query.length < 3) {
+        suggestionsBox.innerHTML = '';
+        return;
+    }
+
+    try {
+        // ON AJOUTE LA CLÉ ICI POUR QUE GOOGLE RÉPONDE AU NAVIGATEUR
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.items) {
+    suggestionsBox.innerHTML = data.items.map(book => {
+        const title = book.volumeInfo.title;
+        const author = book.volumeInfo.authors ? book.volumeInfo.authors[0] : "Auteur inconnu";
+        
+        // On prépare les textes pour le clic (gestion des apostrophes)
+        const cleanTitle = title.replace(/'/g, "\\'");
+        
+        return `
+            <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
+                <span class="suggestion-title">${title}</span>
+                <span class="suggestion-author"> — ${author}</span>
+            </div>
+        `;
+    }).join('');
+    
+    suggestionsBox.style.display = 'block';
+}
+    } catch (e) {
+        console.error("Erreur suggestions:", e);
+    }
+});
+
+function selectSuggestion(title) {
+    input.value = title;
+    suggestionsBox.innerHTML = '';
+    document.getElementById('searchForm').submit();
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target !== input) suggestionsBox.innerHTML = '';
+});
+</script>
+</body>
+</html> 

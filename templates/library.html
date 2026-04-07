@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ma Bibliothèque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Recherche</a>
+        <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
+    </nav>
+
+    <h1>Ma Collection Personnelle</h1>
+
+    <div class="library-container">
+        {% if library %}
+            <div class="book-grid">
+                {% for item in library %}
+                    <div class="book-card">
+                        <div class="book-info">
+                            <h3 class="book-title">{{ item.title }}</h3>
+                            <p class="book-author">par {{ item.author }}</p>
+                        </div>
+                        <div class="book-status">✓ Lu</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>Votre bibliothèque est encore vide. Commencez par chercher un livre !</p>
+                <a href="{{ url_for('home') }}" class="btn-search">Aller à la recherche</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
