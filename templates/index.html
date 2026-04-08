@@ -53,7 +53,7 @@ const suggestionsBox = document.getElementById('suggestionsBox');
 const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
 
 input.addEventListener('input', async () => {
-    const query = input.value;
+    const query = input.value.trim();
     if (query.length < 3) {
         suggestionsBox.innerHTML = '';
         suggestionsBox.style.display = 'none';
@@ -61,19 +61,20 @@ input.addEventListener('input', async () => {
     }
 
     try {
-        // ON PASSE EN MODE US : Pas de restriction de langue, mais catalogue mondial.
-        // On demande 10 résultats pour être sûr d'avoir les gros titres.
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&country=US&maxResults=10&orderBy=relevance&key=${API_KEY}`;
+        // EXACTEMENT la même requête que dans app.py : intitle + relevance
+        const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&orderBy=relevance&maxResults=10&key=${API_KEY}`;
         
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.items) {
-            suggestionsBox.innerHTML = data.items.map(book => {
-                const info = book.volumeInfo;
-                const title = info.title || "Titre inconnu";
-                const author = info.authors ? info.authors[0] : "Auteur inconnu";
-                const cleanTitle = title.replace(/'/g, "\\'");
+            // On filtre pour n'afficher que ceux qui ont un auteur (évite les archives)
+            const filtered = data.items.filter(b => b.volumeInfo.authors);
+            
+            suggestionsBox.innerHTML = filtered.slice(0, 6).map(book => {
+                const title = book.volumeInfo.title;
+                const author = book.volumeInfo.authors[0];
+                const cleanTitle = title.replace(/'/g, "\\'"); // Protection contre les apostrophes
                 
                 return `
                     <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
@@ -84,9 +85,7 @@ input.addEventListener('input', async () => {
             }).join('');
             suggestionsBox.style.display = 'block';
         }
-    } catch (e) {
-        console.error("Erreur suggestions:", e);
-    }
+    } catch (e) { console.error(e); }
 });
 
 function selectSuggestion(title) {
@@ -95,6 +94,7 @@ function selectSuggestion(title) {
     document.getElementById('searchForm').submit();
 }
 
+// Ferme la liste si on clique ailleurs
 document.addEventListener('click', (e) => {
     if (e.target !== input) suggestionsBox.style.display = 'none';
 });

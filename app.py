@@ -15,28 +15,31 @@ def home():
 
 @app.route('/search', methods=['POST'])
 def search():
-    entry = request.form.get('user_book')
-    # On récupère l'ID spécifique si    l'utilisateur a cliqué sur une suggestion
-    selected_id = request.form.get('selected_book_id') 
-
-    if not entry:
-        return redirect(url_for('homeme'))
-
-    params = {'q': entry, 'key': API_KEY}
-    response = requests.get("https://www.googleapis.com/books/v1/volumes", params=params)
-    data = response.json()
-
-    if 'items' in data:
-        book_list = data['items']
-        
-        # LOGIQUE "AMAZON" : Si l'utilisateur a cliqué sur un livre précis dans la liste, 
-        # on le remonte en 1ère position.
-        if selected_id:
-            book_list.sort(key=lambda x: 0 if x.get('id') == selected_id else 1)
-
-        return render_template('index.html', results=book_list, entry=entry, library=my_library)
+    query = request.form.get('q')
+    if not query:
+        return redirect(url_for('home'))
     
-    return render_template('index.html', error="Aucun résultat", library=my_library)
+    # On force 'intitle:' pour que Python cherche comme le JavaScript
+    # On demande 20 résultats pour avoir du choix
+    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&maxResults=20&key={API_KEY}"
+    
+    response = requests.get(api_url)
+    data = response.json()
+    
+    books = []
+    if 'items' in data:
+        for item in data['items']:
+            info = item.get('volumeInfo', {})
+            # On ne garde que les livres qui ont un titre et un auteur
+            if 'title' in info and 'authors' in info:
+                books.append({
+                    'title': info['title'],
+                    'author': info['authors'][0],
+                    'description': info.get('description', 'Pas de description disponible.'),
+                    'thumbnail': info.get('imageLinks', {}).get('thumbnail', '')
+                })
+    
+    return render_template('index.html', books=books, query=query)
 
 @app.route('/add', methods=['POST'])
 def add():
