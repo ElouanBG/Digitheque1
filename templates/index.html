@@ -53,7 +53,8 @@ const suggestionsBox = document.getElementById('suggestionsBox');
 const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
 
 input.addEventListener('input', async () => {
-    const query = input.value.trim();
+    const query = input.value.trim().toLowerCase();
+    
     if (query.length < 3) {
         suggestionsBox.innerHTML = '';
         suggestionsBox.style.display = 'none';
@@ -61,20 +62,27 @@ input.addEventListener('input', async () => {
     }
 
     try {
-        // EXACTEMENT la même requête que dans app.py : intitle + relevance
-        const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&orderBy=relevance&maxResults=10&key=${API_KEY}`;
-        
+        // Recherche simple
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&key=${API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.items) {
-            // On filtre pour n'afficher que ceux qui ont un auteur (évite les archives)
-            const filtered = data.items.filter(b => b.volumeInfo.authors);
-            
-            suggestionsBox.innerHTML = filtered.slice(0, 6).map(book => {
-                const title = book.volumeInfo.title;
-                const author = book.volumeInfo.authors[0];
-                const cleanTitle = title.replace(/'/g, "\\'"); // Protection contre les apostrophes
+            // ON TRIE : si le titre commence par la query, il passe devant les autres
+            const sortedItems = data.items.sort((a, b) => {
+                const titleA = (a.volumeInfo.title || "").toLowerCase();
+                const titleB = (b.volumeInfo.title || "").toLowerCase();
+                
+                const startA = titleA.startsWith(query) ? 0 : 1;
+                const startB = titleB.startsWith(query) ? 0 : 1;
+                
+                return startA - startB; // Les 0 (commence par) passent avant les 1
+            });
+
+            suggestionsBox.innerHTML = sortedItems.slice(0, 8).map(book => {
+                const title = book.volumeInfo.title || "Titre inconnu";
+                const author = book.volumeInfo.authors ? book.volumeInfo.authors[0] : "Auteur inconnu";
+                const cleanTitle = title.replace(/'/g, "\\'");
                 
                 return `
                     <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
@@ -85,7 +93,9 @@ input.addEventListener('input', async () => {
             }).join('');
             suggestionsBox.style.display = 'block';
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Erreur:", e);
+    }
 });
 
 function selectSuggestion(title) {
@@ -94,9 +104,10 @@ function selectSuggestion(title) {
     document.getElementById('searchForm').submit();
 }
 
-// Ferme la liste si on clique ailleurs
 document.addEventListener('click', (e) => {
-    if (e.target !== input) suggestionsBox.style.display = 'none';
+    if (e.target !== input) {
+        suggestionsBox.style.display = 'none';
+    }
 });
 </script>
 </body>

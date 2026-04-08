@@ -19,10 +19,10 @@ def search():
     if not query:
         return redirect(url_for('home'))
     
-    # On force 'intitle:' pour que Python cherche comme le JavaScript
-    # On demande 20 résultats pour avoir du choix
-    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&maxResults=20&key={API_KEY}"
+    # On cherche toujours avec intitle pour la précision
+    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=40&key={API_KEY}"
     
+    import requests
     response = requests.get(api_url)
     data = response.json()
     
@@ -30,16 +30,25 @@ def search():
     if 'items' in data:
         for item in data['items']:
             info = item.get('volumeInfo', {})
-            # On ne garde que les livres qui ont un titre et un auteur
-            if 'title' in info and 'authors' in info:
+            
+            # LE FILTRE MAGIQUE : On vérifie si le livre a un identifiant ISBN
+            # Les vrais livres (Amazon/Fnac) en ont toujours un.
+            isbns = info.get('industryIdentifiers', [])
+            has_isbn = any(id_type['type'] in ['ISBN_10', 'ISBN_13'] for id_type in isbns)
+            
+            if has_isbn and 'authors' in info:
                 books.append({
                     'title': info['title'],
                     'author': info['authors'][0],
                     'description': info.get('description', 'Pas de description disponible.'),
-                    'thumbnail': info.get('imageLinks', {}).get('thumbnail', '')
+                    'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
+                    'isbn': isbns[0]['identifier'] # On garde l'ISBN pour plus tard
                 })
     
-    return render_template('index.html', books=books, query=query)
+    # On ne garde que les 10 meilleurs résultats après filtrage
+    return render_template('index.html', books=books[:10], query=query)
+
+
 
 @app.route('/add', methods=['POST'])
 def add():
