@@ -48,8 +48,6 @@ def search():
     # On ne garde que les 10 meilleurs résultats après filtrage
     return render_template('index.html', books=books[:10], query=query)
 
-
-
 @app.route('/add', methods=['POST'])
 def add():
     selection = request.form.get('book_info')
