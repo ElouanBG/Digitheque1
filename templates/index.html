@@ -18,7 +18,7 @@
             <div class="input-wrapper">
                 <input type="text" name="user_book" id="bookInput" 
                        value="{{ entry if entry else '' }}" 
-                       placeholder="Chercher un livre comme sur Amazon..." required>
+                       placeholder="Chercher un livre comme sur Amazon..." autocomplete="off">
                 <div id="suggestionsBox" class="suggestions-dropdown"></div>
             </div>
             <button type="submit">Rechercher</button>
@@ -125,11 +125,12 @@ function selectSuggestion(title) {
         document.getElementById('searchForm').submit();
     }, 50);
 }
+// On s'assure que le formulaire n'est pas bloqué par le JS
+document.getElementById('searchForm').onsubmit = function() {
+    suggestionsBox.style.display = 'none';
+    return true; // Autorise l'envoi
+};
 
-// AJOUTE CECI pour être sûr que le bouton "Rechercher" manuel fonctionne
-document.getElementById('searchForm').addEventListener('submit', function() {
-    suggestionsBox.style.display = 'none'; // Ferme les suggestions au clic sur Rechercher
-});
 </script>
 
 </body>

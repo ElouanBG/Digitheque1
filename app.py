@@ -15,45 +15,23 @@ def home():
 
 @app.route('/search', methods=['POST'])
 def search():
-    query = request.form.get('q')
+    query = request.form.get('user_book')
+    print(f"DEBUG: Recherche reçue : {query}")
+    
     if not query:
         return redirect(url_for('home'))
     
-    # On demande 40 résultats pour avoir un "bac à sable" suffisant pour trier
-    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=40&key={API_KEY}"
+    # On demande les résultats bruts de Google
+    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=15&key={API_KEY}"
     
-    import requests
     response = requests.get(api_url)
     data = response.json()
     
-    books = []
-    if 'items' in data:
-        for item in data['items']:
-            info = item.get('volumeInfo', {})
-            
-            # --- LE FILTRE DE QUALITÉ ---
-            # 1. On vérifie s'il y a un ISBN (preuve que c'est un vrai livre commercial)
-            isbns = info.get('industryIdentifiers', [])
-            has_isbn = any(id_type['type'] in ['ISBN_10', 'ISBN_13'] for id_type in isbns)
-            
-            # 2. On vérifie s'il y a un auteur et une image (élimine les archives vides)
-            has_author = 'authors' in info
-            has_image = 'imageLinks' in info
-            
-            # On n'ajoute que si c'est du "solide"
-            if has_isbn and has_author and has_image:
-                books.append({
-                    'title': info['title'],
-                    'author': info['authors'][0],
-                    'description': info.get('description', 'Pas de description disponible.')[:300] + "...",
-                    'thumbnail': info['imageLinks'].get('thumbnail', ''),
-                    'year': info.get('publishedDate', 'N/A')[:4]
-                })
-
-    # On trie pour mettre les titres les plus courts (souvent les originaux) en premier
-    books.sort(key=lambda x: len(x['title']))
+    # Ton HTML boucle sur 'results'
+    results = data.get('items', [])
     
-    return render_template('index.html', books=books[:12], query=query)
+    # Ton HTML utilise 'entry' pour afficher le titre de la recherche
+    return render_template('index.html', results=results, entry=query)
 
 @app.route('/add', methods=['POST'])
 def add():
