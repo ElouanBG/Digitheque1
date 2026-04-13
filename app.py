@@ -19,7 +19,7 @@ def search():
     if not query:
         return redirect(url_for('home'))
     
-    # On cherche toujours avec intitle pour la précision
+    # On demande 40 résultats pour avoir un "bac à sable" suffisant pour trier
     api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=40&key={API_KEY}"
     
     import requests
@@ -31,22 +31,29 @@ def search():
         for item in data['items']:
             info = item.get('volumeInfo', {})
             
-            # LE FILTRE MAGIQUE : On vérifie si le livre a un identifiant ISBN
-            # Les vrais livres (Amazon/Fnac) en ont toujours un.
+            # --- LE FILTRE DE QUALITÉ ---
+            # 1. On vérifie s'il y a un ISBN (preuve que c'est un vrai livre commercial)
             isbns = info.get('industryIdentifiers', [])
             has_isbn = any(id_type['type'] in ['ISBN_10', 'ISBN_13'] for id_type in isbns)
             
-            if has_isbn and 'authors' in info:
+            # 2. On vérifie s'il y a un auteur et une image (élimine les archives vides)
+            has_author = 'authors' in info
+            has_image = 'imageLinks' in info
+            
+            # On n'ajoute que si c'est du "solide"
+            if has_isbn and has_author and has_image:
                 books.append({
                     'title': info['title'],
                     'author': info['authors'][0],
-                    'description': info.get('description', 'Pas de description disponible.'),
-                    'thumbnail': info.get('imageLinks', {}).get('thumbnail', ''),
-                    'isbn': isbns[0]['identifier'] # On garde l'ISBN pour plus tard
+                    'description': info.get('description', 'Pas de description disponible.')[:300] + "...",
+                    'thumbnail': info['imageLinks'].get('thumbnail', ''),
+                    'year': info.get('publishedDate', 'N/A')[:4]
                 })
+
+    # On trie pour mettre les titres les plus courts (souvent les originaux) en premier
+    books.sort(key=lambda x: len(x['title']))
     
-    # On ne garde que les 10 meilleurs résultats après filtrage
-    return render_template('index.html', books=books[:10], query=query)
+    return render_template('index.html', books=books[:12], query=query)
 
 @app.route('/add', methods=['POST'])
 def add():
