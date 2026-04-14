@@ -16,21 +16,26 @@ def home():
 @app.route('/search', methods=['POST'])
 def search():
     query = request.form.get('user_book')
-    print(f"DEBUG: Recherche reçue : {query}")
-    
     if not query:
         return redirect(url_for('home'))
+
+    # On utilise l'URL EXACTE du script qui marche
+    url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=10&key={API_KEY}"
     
-    # On demande les résultats bruts de Google
-    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}&printType=books&maxResults=15&key={API_KEY}"
-    
-    response = requests.get(api_url)
+    response = requests.get(url)
     data = response.json()
     
-    # Ton HTML boucle sur 'results'
-    results = data.get('items', [])
-    
-    # Ton HTML utilise 'entry' pour afficher le titre de la recherche
+    results = []
+    if "items" in data:
+        for item in data['items']:
+            info = item.get('volumeInfo', {})
+            results.append({
+                'title': info.get('title'),
+                'author': info.get('authors', ['Auteur inconnu'])[0],
+                'description': info.get('description', 'Pas de résumé')[:200] + "...",
+                'image': info.get('imageLinks', {}).get('thumbnail', '')
+            })
+            
     return render_template('index.html', results=results, entry=query)
 
 @app.route('/add', methods=['POST'])

@@ -1,137 +1,122 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Ma Biblio</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav>
-        <a href="{{ url_for('home') }}">Recherche</a>
-        <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
-    </nav>
-
-    <h1>Chercher un livre</h1>
-
-    <div class="search-container">
-        <form action="{{ url_for('search') }}" method="POST" id="searchForm" autocomplete="off">
-            <div class="input-wrapper">
-                <input type="text" name="user_book" id="bookInput" 
-                       value="{{ entry if entry else '' }}" 
-                       placeholder="Chercher un livre comme sur Amazon..." autocomplete="off">
-                <div id="suggestionsBox" class="suggestions-dropdown"></div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Ma Biblio</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <nav>
+            <a href="{{ url_for('home') }}">Recherche</a>
+            <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
+        </nav>
+    
+        <h1>Chercher un livre</h1>
+    
+        <div class="search-container">
+            <form action="{{ url_for('search') }}" method="POST" id="searchForm" autocomplete="off">
+                <div class="input-wrapper">
+                    <input type="text" name="user_book" id="bookInput" 
+                           value="{{ entry if entry else '' }}" 
+                           placeholder="Chercher un livre comme sur Amazon..." autocomplete="off">
+                    <div id="suggestionsBox" class="suggestions-dropdown"></div>
+                </div>
+                <button type="submit">Rechercher</button>
+            </form>
+        </div>
+    
+        {% if results %}
+        <div class="results-box">
+            <h3>Résultats pour "{{ entry }}"</h3>
+            {% for book in results %}
+            <div style="display: flex; background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: black;">
+                <div style="margin-right: 20px;">
+                    {% if book.image %}
+                        <img src="{{ book.image }}" alt="Couverture" style="width: 80px; border-radius: 4px;">
+                    {% else %}
+                        <div style="width: 80px; height: 120px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 10px;">Pas d'image</div>
+                    {% endif %}
+                </div>
+    
+                <div style="flex: 1;">
+                    <h4 style="margin: 0;">{{ book.title }}</h4>
+                    <p style="margin: 5px 0; color: #555;"><strong>{{ book.author }}</strong></p>
+                    <p style="font-size: 0.85em; color: #777;">{{ book.description }}</p>
+    
+                    <form action="{{ url_for('add') }}" method="POST">
+                        <input type="hidden" name="book_info" value="{{ book.title }}|{{ book.author }}">
+                        <button type="submit" class="btn-add">Ajouter à ma bibliothèque</button>
+                    </form>
+                </div>
             </div>
-            <button type="submit">Rechercher</button>
-        </form>
-    </div>
-
-    {% if results %}
-    <div class="results-box">
-        <h3>Résultats pour "{{ entry }}"</h3>
-        <form action="{{ url_for('add') }}" method="POST">
-            <label for="book_info">Choisissez la version exacte :</label>
-            <select name="book_info" id="book_info">
-                {% for book in results %}
-                    {% set info = book.volumeInfo %}
-                    <option value="{{ info.title }}|{{ info.authors[0] if info.authors else 'Inconnu' }}">
-                        {{ info.title }} ({{ info.authors[0] if info.authors else 'Inconnu' }})
-                    </option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn-add">Ajouter à ma bibliothèque</button>
-        </form>
-    </div>
-    {% endif %}
-
-    {% if error %}
-        <p style="color: #e74c3c; text-align: center; font-weight: bold;">{{ error }}</p>
-    {% endif %}
-
-<script>
-const input = document.getElementById('bookInput');
-const suggestionsBox = document.getElementById('suggestionsBox');
-const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
-let timeout = null;
-
-input.addEventListener('input', () => {
-    clearTimeout(timeout);
-    const query = input.value.trim();
-
-    if (query.length < 3) {
-        suggestionsBox.innerHTML = '';
-        suggestionsBox.style.display = 'none';
-        return;
-    }
-
-    // On attend 400ms après la dernière touche pressée pour lancer la recherche
-    timeout = setTimeout(async () => {
-        try {
-            // ÉTAPE 1 : Open Library (Le cerveau pour les titres propres)
-            const olUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`;
-            const olResponse = await fetch(olUrl);
-            const olData = await olResponse.json();
-
-            let suggestions = [];
-            if (olData.docs && olData.docs.length > 0) {
-                suggestions = olData.docs.map(doc => ({
-                    title: doc.title,
-                    author: doc.author_name ? doc.author_name[0] : "Auteur inconnu"
-                }));
-            }
-
-            // ÉTAPE 2 : Backup Google Books (uniquement si Open Library est vide)
-            if (suggestions.length === 0) {
-                const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&printType=books&maxResults=5&key=${API_KEY}`;
-                const gbResponse = await fetch(gbUrl);
-                const gbData = await gbResponse.json();
-                if (gbData.items) {
-                    suggestions = gbData.items.map(b => ({
-                        title: b.volumeInfo.title,
-                        author: b.volumeInfo.authors ? b.volumeInfo.authors[0] : "Auteur inconnu"
+            {% endfor %}
+        </div>
+        {% endif %}
+    
+        {% if error %}
+            <p style="color: #e74c3c; text-align: center; font-weight: bold;">{{ error }}</p>
+        {% endif %}
+    
+    <script>
+    // ... (Ton script actuel est bon, garde-le tel quel) ...
+    const input = document.getElementById('bookInput');
+    const suggestionsBox = document.getElementById('suggestionsBox');
+    const API_KEY = "AIzaSyDXu4Ye5TJ0NiW725teWG7w_xoLDokL7WU";
+    let timeout = null;
+    
+    input.addEventListener('input', () => {
+        clearTimeout(timeout);
+        const query = input.value.trim();
+        if (query.length < 3) {
+            suggestionsBox.innerHTML = '';
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+        timeout = setTimeout(async () => {
+            try {
+                const olUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`;
+                const olResponse = await fetch(olUrl);
+                const olData = await olResponse.json();
+                let suggestions = [];
+                if (olData.docs && olData.docs.length > 0) {
+                    suggestions = olData.docs.map(doc => ({
+                        title: doc.title,
+                        author: doc.author_name ? doc.author_name[0] : "Auteur inconnu"
                     }));
                 }
-            }
-
-            // ÉTAPE 3 : Affichage
-            if (suggestions.length > 0) {
-                suggestionsBox.innerHTML = suggestions.map(s => {
-                    const cleanTitle = s.title.replace(/'/g, "\\'");
-                    return `
-                        <div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
-                            <span class="suggestion-title">${s.title}</span>
-                            <span class="suggestion-author"> — ${s.author}</span>
-                        </div>
-                    `;
-                }).join('');
-                suggestionsBox.style.display = 'block';
-            } else {
-                suggestionsBox.style.display = 'none';
-            }
-
-        } catch (e) {
-            console.error("Erreur de recherche :", e);
-        }
-    }, 400); 
-});
-
-// Remplace ta fonction actuelle par celle-ci
-function selectSuggestion(title) {
-    input.value = title;
-    suggestionsBox.innerHTML = '';
-    suggestionsBox.style.display = 'none';
+                if (suggestions.length === 0) {
+                    const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&printType=books&maxResults=5&key=${API_KEY}`;
+                    const gbResponse = await fetch(gbUrl);
+                    const gbData = await gbResponse.json();
+                    if (gbData.items) {
+                        suggestions = gbData.items.map(b => ({
+                            title: b.volumeInfo.title,
+                            author: b.volumeInfo.authors ? b.volumeInfo.authors[0] : "Auteur inconnu"
+                        }));
+                    }
+                }
+                if (suggestions.length > 0) {
+                    suggestionsBox.innerHTML = suggestions.map(s => {
+                        const cleanTitle = s.title.replace(/'/g, "\\'");
+                        return `<div class="suggestion-item" onclick="selectSuggestion('${cleanTitle}')">
+                                    <span class="suggestion-title">${s.title}</span>
+                                    <span class="suggestion-author"> — ${s.author}</span>
+                                </div>`;
+                    }).join('');
+                    suggestionsBox.style.display = 'block';
+                } else {
+                    suggestionsBox.style.display = 'none';
+                }
+            } catch (e) { console.error(e); }
+        }, 400); 
+    });
     
-    // On laisse un tout petit délai pour que l'input se mette à jour avant l'envoi
-    setTimeout(() => {
-        document.getElementById('searchForm').submit();
-    }, 50);
-}
-// On s'assure que le formulaire n'est pas bloqué par le JS
-document.getElementById('searchForm').onsubmit = function() {
-    suggestionsBox.style.display = 'none';
-    return true; // Autorise l'envoi
-};
-
-</script>
-
-</body>
-</html> 
+    function selectSuggestion(title) {
+        input.value = title;
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
+        setTimeout(() => { document.getElementById('searchForm').submit(); }, 50);
+    }
+    </script>
+    </body>
+    </html>
