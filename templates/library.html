@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
     <title>Ma Bibliothèque</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -11,27 +10,38 @@
         <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
     </nav>
 
-    <h1>Ma Collection Personnelle</h1>
+    <h1>Ma Bibliothèque</h1>
 
     <div class="library-container">
         {% if library %}
-            <div class="book-grid">
-                {% for item in library %}
-                    <div class="book-card">
-                        <div class="book-info">
-                            <h3 class="book-title">{{ item.title }}</h3>
-                            <p class="book-author">par {{ item.author }}</p>
-                        </div>
-                        <div class="book-status">✓ Lu</div>
-                    </div>
-                {% endfor %}
+            {% for book in library %}
+            <div class="book-item" style="border-bottom: 1px solid #ccc; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 10px; border-radius: 8px;">
+                
+                <div>
+                    <strong>{{ book.titre }}</strong><br>
+                    <span style="color: #666;"><em>{{ book.auteur }}</em></span>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a href="{{ url_for('quiz', book_id=book.id) }}" 
+                       style="background: #3498db; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9em;">
+                        Lancer le Quiz
+                    </a>
+
+                    <form action="{{ url_for('delete', book_id=book.id) }}" method="POST" style="margin: 0;">
+                        <button type="submit" 
+                                style="background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                            Supprimer
+                        </button>
+                    </form>
+                </div>
+
             </div>
+            {% endfor %}
         {% else %}
-            <div class="empty-state">
-                <p>Votre bibliothèque est encore vide. Commencez par chercher un livre !</p>
-                <a href="{{ url_for('home') }}" class="btn-search">Aller à la recherche</a>
-            </div>
+            <p style="text-align: center; color: #7f8c8d;">Ta bibliothèque est vide. Ajoute des livres depuis la page recherche !</p>
         {% endif %}
     </div>
+
 </body>
 </html>

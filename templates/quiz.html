@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz : {{ book.titre }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Quiz sur "{{ book.titre }}"</h1>
+    <form method="POST">
+        {% for i, q in enumerate(questions) %}
+        <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <p><strong>{{ i + 1 }}. {{ q.q }}</strong></p>
+            {% for opt in q.options %}
+            <label style="display: block;">
+                <input type="radio" name="question_{i}" value="{{ opt }}" required> {{ opt }}
+            </label>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" style="background: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            Valider mes réponses
+        </button>
+    </form>
+</body>
+</html>
