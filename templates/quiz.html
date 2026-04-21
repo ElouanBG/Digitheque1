@@ -12,7 +12,7 @@
             <p><strong>{{ i + 1 }}. {{ q.q }}</strong></p>
             {% for opt in q.options %}
             <label style="display: block;">
-                <input type="radio" name="question_{i}" value="{{ opt }}" required> {{ opt }}
+                <input type="radio" name="question_{{i}}" value="{{ opt }}" required> {{ opt }}
             </label>
             {% endfor %}
         </div>

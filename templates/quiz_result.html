@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Résultat du Quiz - {{ book.titre }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Recherche</a>
+        <a href="{{ url_for('show_library') }}">Ma Bibliothèque</a>
+    </nav>
+
+    <div class="main-content" style="text-align: center; margin-top: 50px;">
+        <h1>Résultat pour "{{ book.titre }}"</h1>
+        
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; display: inline-block; border: 2px solid #3498db;">
+            <p style="font-size: 1.2em;">Bravo, tu as terminé le quiz de <strong>{{ book.auteur }}</strong> !</p>
+            
+            <p style="font-size: 2.5em; margin: 20px 0;">
+                Score : <strong>{{ score }} / {{ total }}</strong>
+            </p>
+
+            <div style="font-size: 1.2em; margin-bottom: 20px;">
+                {% if score == total %}
+                    <p style="color: #27ae60;">🌟 Incroyable ! Un sans-faute !</p>
+                {% elif score >= total / 2 %}
+                    <p style="color: #f39c12;">👍 Pas mal du tout, tu as de bons restes.</p>
+                {% else %}
+                    <p style="color: #e74c3c;">📚 Une petite relecture s'impose...</p>
+                {% endif %}
+            </div>
+
+            <a href="{{ url_for('show_library') }}" 
+               style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                Retour à ma bibliothèque
+            </a>
+        </div>
+    </div>
+</body>
+</html>
