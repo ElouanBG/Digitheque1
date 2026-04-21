@@ -44,7 +44,7 @@
                     <p style="font-size: 0.85em; color: #777;">{{ book.description }}</p>
     
                     <form action="{{ url_for('add') }}" method="POST">
-                        <input type="hidden" name="book_info" value="{{ book.title }}|{{ book.author }}|{{ result.isbn }}">
+                        <input type="hidden" name="book_info" value="{{ book.title }}|{{ book.author }}|{{ book.isbn }}">
                         <button type="submit" class="btn-add">Ajouter à ma bibliothèque</button>
                     </form>
                 </div>

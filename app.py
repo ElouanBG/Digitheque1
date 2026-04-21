@@ -64,12 +64,20 @@ def search():
 @app.route('/add', methods=['POST'])
 def add():
     selection = request.form.get('book_info')
-    if selection and "|" in selection:
-        titre, auteur, isbn = selection.split('|')
-        
+    if selection:
+        parties = selection.split('|')
+        if len(parties) == 3:
+            titre, auteur, isbn = parties
+        else:
+            titre = parties[0]
+            auteur = parties[1] if len(parties) > 1 else "Inconnu"
+            isbn = parties[2] if len(parties) > 2 else "Pas d'ISBN"
+
         with get_db_connection() as conn:
             conn.execute('INSERT INTO livres (titre, auteur, isbn) VALUES (?, ?, ?)', 
                          (titre, auteur, isbn))
+            conn.commit()
+            
     return redirect(url_for('show_library'))
 
 @app.route('/library')
